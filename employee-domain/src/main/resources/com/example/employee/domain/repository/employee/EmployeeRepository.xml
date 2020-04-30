@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.employee.domain.repository.employee.EmployeeRepository">
+<!--
+    <resultMap id="accountResultMap" type="Account">
+        <id property="userName" column="username" />
+        <result property="password" column="password" />
+        <result property="empID" column="emp_id" />
+    </resultMap>
+
+    <select id="findOne" parameterType="String" resultMap="accountResultMap">
+        SELECT
+            username,
+            password,
+            emp_id
+        FROM
+            account
+        WHERE
+            username = #{username}
+    </select>
+-->
+
+<resultMap id="employeeResultMap" type="Employee">
+<id property="empid" column="id"/>
+<result property="name" column="name"/>
+<result property="gender" column="gender"/>
+<result property="maritalStatus" column="marital_status"/>
+<result property="birthDate" column="birthDate"/>
+<result property="email" column="email"/>
+<result property="phNo" column="phone"/>
+<result property="joinDate" column="createDate"/>
+<result property="departmentId" column="department_id"/>
+<result property="japanId" column="japan_id"/>
+<result property="position" column="position_id"/>
+<result property="devname" column="devname"/>
+<result property="japanname" column="japanname"/>
+<result property="positionname" column="posname"/>
+</resultMap>
+
+<sql id="WherePhrase">
+    	<if test="criteria.srcData != '' and criteria.srcData != null">
+    		<![CDATA[
+    		Where emp.id::varchar LIKE #{criteria.srcData} || '%' ESCAPE '~'
+    		OR emp.name LIKE #{criteria.srcData} || '%' 
+    		OR emp.phone LIKE #{criteria.srcData} || '%'
+    		OR emp.email LIKE #{criteria.srcData} || '%'
+    		]]>
+    	</if>
+ </sql>
+  	
+<select id="countByCriteria" parameterType="SearchData" resultType="_long">
+        SELECT count(*)
+			FROM  (
+    			select *
+					from employee as Emp
+					<include refid="WherePhrase" />
+					Order by emp.id
+    		) sub;
+    </select>
+	
+	 <select id="findPageByCriteria" resultMap="employeeResultMap">
+        SELECT 
+		Emp.ID as id, 
+		Emp.NAME as name, 
+	    Emp.GENDER as gender, 
+		Emp.MARITAL_STATUS as marital_status,
+		Emp.BIRTHDATE as birthDate,
+		Emp.EMAIL as email,
+		Emp.PHONE as phone,
+		Emp.CREATEDATE as createDate ,
+		Emp.DEPARTMENT_ID as department_ID,
+		dep.NAME as devname, 
+		Emp.JAPAN_ID as japan_ID ,
+		jap.NAME as japanname,
+		Emp.POSITION_ID as position_ID,
+		pos.NAME as posname
+		FROM EMPLOYEE as Emp
+		LEFT JOIN JAPANESELEVEL AS Jap ON Emp.ID = Jap.ID 
+		LEFT JOIN DEPARTMENT AS Dep ON Emp.DEPARTMENT_ID = Dep.ID
+		LEFT JOIN POSITION AS Pos ON Emp.POSITION_ID = Pos.ID 
+		<include refid="WherePhrase" />
+		Order by emp.id
+			LIMIT
+            	#{pageable.pageSize}
+        	OFFSET
+            	#{pageable.offset};
+    </select>
+    
+	 <select id="findALL" parameterType="SearchData" resultMap="employeeResultMap">
+	SELECT 
+		Emp.ID as id, 
+		Emp.NAME as name, 
+	    Emp.GENDER as gender, 
+		Emp.MARITAL_STATUS as marital_status,
+		Emp.BIRTHDATE as birthDate,
+		Emp.EMAIL as email,
+		Emp.PHONE as phone,
+		Emp.CREATEDATE as createDate ,
+		Emp.DEPARTMENT_ID as department_ID,
+		dep.NAME as devname, 
+		Emp.JAPAN_ID as japan_ID ,
+		jap.NAME as japanname,
+		Emp.POSITION_ID as position_ID,
+		pos.NAME as posname
+		FROM EMPLOYEE as Emp
+		LEFT JOIN JAPANESELEVEL AS Jap ON Emp.ID = Jap.ID 
+		LEFT JOIN DEPARTMENT AS Dep ON Emp.DEPARTMENT_ID = Dep.ID
+		LEFT JOIN POSITION AS Pos ON Emp.POSITION_ID = Pos.ID 
+		<include refid="WherePhrase" />
+		ORDER BY Emp.ID;
+		</select>
+	
+	<select id="findByID" parameterType="String" resultMap="employeeResultMap">
+        SELECT 
+		Emp.ID as id, 
+		Emp.NAME as name, 
+	    Emp.GENDER as gender, 
+		Emp.MARITAL_STATUS as marital_status,
+		Emp.BIRTHDATE as birthDate,
+		Emp.EMAIL as email,
+		Emp.PHONE as phone,
+		Emp.CREATEDATE as createDate ,
+		Emp.DEPARTMENT_ID as department_ID,
+		dep.NAME as devname, 
+		Emp.JAPAN_ID as japan_ID ,
+		jap.NAME as japanname,
+		Emp.POSITION_ID as position_ID,
+		pos.NAME as posname
+		FROM EMPLOYEE as Emp
+		LEFT JOIN JAPANESELEVEL AS Jap ON Emp.ID = Jap.ID 
+		LEFT JOIN DEPARTMENT AS Dep ON Emp.DEPARTMENT_ID = Dep.ID
+		LEFT JOIN POSITION AS Pos ON Emp.POSITION_ID = Pos.ID 
+		Where emp.id::varchar = #{srcData};
+    </select>
+	<insert id="create" parameterType="Employee">
+    <![CDATA[
+        INSERT INTO employee
+        ( 
+            name, 
+            gender, 
+            marital_status, 
+            birthDate,
+            email, 
+            phone, 
+            createDate,
+            department_ID, 
+            japan_ID,
+            position_ID
+        ) 
+        VALUES
+        ( 
+            #{name},
+            #{gender},
+            #{maritalStatus},   
+            TO_DATE(#{birthDate}, 'YYYY/MM/DD'),
+            #{email},
+            #{phNo},
+            TO_DATE(#{joinDate}, 'YYYY/MM/DD'),
+            #{departmentId}::INT, 
+            #{japanId}::INT, 
+            #{position}::INT     
+        )
+    ]]>
+    </insert>
+    <update id="update" parameterType="Employee">
+    <![CDATA[
+        UPDATE employee set
+            name = #{name},
+            gender = #{gender},
+            marital_status = #{maritalStatus},  
+            birthDate = TO_DATE(#{birthDate}, 'YYYY/MM/DD'),
+            email = #{email},
+            phone = #{phNo},
+            createDate = TO_DATE(#{joinDate}, 'YYYY/MM/DD'),
+            department_ID = #{departmentId}::INT, 
+            japan_ID = #{japanId}::INT, 
+            position_ID =#{position}::INT  
+            where id::varchar = #{empid}
+    ]]>
+    </update>
+	<delete id="delete" parameterType="String">
+    <![CDATA[
+        DELETE FROM
+            employee
+        WHERE
+            id::varchar = #{empid}
+    ]]>
+    </delete>
+</mapper>
